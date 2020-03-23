@@ -147,34 +147,197 @@ cpp_operator::action(QImage img)
          }
      }
 
-//--------------------计算兴趣区域的面积和数量，判断连通域的算子是3x3--------
+//--------------------计算兴趣区域的面积和数量，采用种子点生长--------
+/*
+ * 图片会根据检测出来种子点的次序，依次标记兴趣区域的值。获得兴趣点区域的值可以根据兴趣点标记的次序依次获得
+*/
+     int num_bole = 0;
+     int num_bole_area [1000] ;
+     for(int i=;i<1000;i++)
+     {
+         num_bole_area[i]=0;
+     }
 
      for(int i=0;i<width;i++)
      {
          for(int j=0;j<height;j++)
          {
-            if(img_threshold[i][j]==255)
+             //定义种子节点的缓冲值
+             int point_buffer_x[1000];
+             int point_buffer_y[1000];
+             for(int i=0;i<1000;i++)
+             {
+                point_buffer_x[i]=0;
+                point_buffer_y[i]=0;
+             }
+             //定义种子BUFFER的数量值
+             int buffer_are=0;
+              int buffer_mun=0;
+            if(img_threshold[i][j]==255) //获取种子点
             {
-                for(int element_i=0;element_i<3;element_i++)
+                num_bole++; //区域标记值
+                //判断种子点周围标定点的值
+                if(img_threshold[i-1][j]==255)
                 {
-                    for(int element_j=0;element_j<3;element_j++)
+                    point_buffer_x[buffer_mun]=i-1;
+                    point_buffer_y[buffer_mun]=j;
+                    buffer_are++;
+                    buffer_mun++;
+                }
+                if(img_threshold[i+1][j]==255)
+                {
+                    point_buffer_x[buffer_mun]=i+1;
+                    point_buffer_y[buffer_mun]=j;
+                    buffer_are++;
+                    buffer_mun++;
+                }
+                if(img_threshold[i][j-1]==255)
+                {
+                    point_buffer_x[buffer_mun]=i;
+                    point_buffer_y[buffer_mun]=j-1;
+                    buffer_are++;
+                    buffer_mun++;
+                }
+                if(img_threshold[i][j+1]==255)
+                {
+                    point_buffer_x[buffer_mun]=i;
+                    point_buffer_y[buffer_mun]=j+1;
+                    buffer_are++;
+                    buffer_mun++;
+                }
+                 buffer_are++;
+                img_threshold[i][j]=num_bole;
+                if(buffer_mun>0)
+                {
+                    //洪水法蔓延计算
+                    for(int buffer_i=0;buffer_i<buffer_are;buffer_i++)
                     {
-                        if((i-1+element_i>0)&(j-1+element_j>0))
+                        if(point_buffer_x[buffer_i]!=0)
                         {
-                            if(img_threshold[i-1+element_i][j-1+element_j]==255)
+                            if(img_threshold[point_buffer_x[buffer_i]-1][point_buffer_y[buffer_i]]==255)
                             {
-
+                                point_buffer_x[buffer_are]=point_buffer_x[buffer_i]-1;
+                                point_buffer_y[buffer_are]=point_buffer_y[buffer_i];
+                                buffer_mun++;
+                                buffer_are++;
+                            }
+                            if(img_threshold[point_buffer_x[buffer_i]+1][point_buffer_y[buffer_i]]==255)
+                            {
+                                point_buffer_x[buffer_are]=point_buffer_x[buffer_i]+1;
+                                point_buffer_y[buffer_are]=point_buffer_y[buffer_i];
+                                buffer_mun++;
+                                buffer_are++;
+                            }
+                            if(img_threshold[point_buffer_x[buffer_i]][point_buffer_y[buffer_i]-1]==255)
+                            {
+                                point_buffer_x[buffer_are]=point_buffer_x[buffer_i];
+                                point_buffer_y[buffer_are]=point_buffer_y[buffer_i]-1;
+                                buffer_mun++;
+                                buffer_are++;
+                            }
+                            if(img_threshold[point_buffer_x[buffer_i]][point_buffer_y[buffer_i]+1]==255)
+                            {
+                                point_buffer_x[buffer_are]=point_buffer_x[buffer_i];
+                                point_buffer_y[buffer_are]=point_buffer_y[buffer_i]+1;
+                                buffer_mun++;
+                                buffer_are++;
                             }
                         }
+                        img_threshold[point_buffer_x[buffer_i]][point_buffer_y[buffer_i]]=num_bole;
+                        point_buffer_x[buffer_i]=0;
+                        point_buffer_y[buffer_i]=0;
+                        buffer_mun--;
                     }
-                 }
+                }
             }
+            num_bole_area[num_bole]=buffer_are;
+            delete []point_buffer_x;
+            delete []point_buffer_y;
           }
       }
 
+//-----------根据面积值筛选出兴趣点的值和面积大小---------
+/*
+    获得大于区域面积大于500的联通区域的标记值,buffer_int为符合面积的连通域数量
+*/
+     int sign_num[100];
+     int buffer_int = 0;
+     for(int i=0;i<100;i++)
+     {
+         sign_num[i]=0;
+     }
+     for(int i=0;i<1000;i++)
+     {
+         if(num_bole_area[i]>500)
+         {
+            sign_num[buffer_int]=i;
+            buffer_int++;
+         }
+     }
+
+//----------------获取有效连通域的顶点坐标----
+/*
+ *  根据标记值判断被标记点的平均值四个顶点值sign_x1(为最小的X值)，sign_x2（为最大的X值），sign_y1（为最小的Y值），sign_y2（为最大的Y值）
+ */
+    int sign_x1[buffer_int];
+    int sign_x2[buffer_int];
+    int sign_y1[buffer_int];
+    int sign_y2[buffer_int];
+    for(int i=0;i<buffer_int;i++)
+    {
+        sign_x1[i]=width;
+        sign_y1[i]=height;
+    }
+    for(int i=0;i<buffer_int;i++)
+    {
+        sign_x2[i]=0;
+        sign_y2[i]=0;
+    }
+
+    for(int num=0;num<buffer_int;num++)
+    {
+        if(sign_num[i]!=0)
+        {
+            for(int i=0;i<width;i++)
+            {
+                for(int j=0;j<height;j++)
+                {
+                    if(img_threshold[i][j]==sign_num[num])
+                    {
+                        if(i<sign_x1[num])
+                        {
+                            sign_x1[num]=i;
+                        }
+                        if(j<sign_y1[num])
+                        {
+                            sign_y1=j;
+                        }
+                        if(i>sign_x2[num])
+                        {
+                            sign_x2[num]=i;
+                        }
+                        if(j>sign_y2[num])
+                        {
+                            sign_y2[num]=j;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
 
+
+
+
+
+     delete []sign_x1;
+     delete []sign_x2;
+     delete []sign_y1;
+     delete []sign_y2;
+     delete []sign_num;
      delete []img_yellow;
      delete []img_threshold;
      delete []blue_threshold;
+     delete []num_bole_area;
 }
