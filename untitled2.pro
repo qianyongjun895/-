@@ -27,12 +27,14 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     qimageshowwidget.cpp \
-    haclon.cpp
+    haclon.cpp \
+    cpp_operator.cpp
 
 HEADERS += \
         mainwindow.h \
     qimageshowwidget.h \
-    haclon.h
+    haclon.h \
+    cpp_operator.h
 
 FORMS += \
         mainwindow.ui
