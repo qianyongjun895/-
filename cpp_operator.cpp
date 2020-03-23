@@ -326,7 +326,31 @@ cpp_operator::action(QImage img)
         }
     }
 
+//-----------使用顶点坐标的X值，计算黄色区域，向下平移十个像素的平均灰度值------
+/*
+    灰度值的基本模板是img_yellow
+*/
+    int avg_threshold=70;
+    int add_threshold=0;
+    int num_threshold=0;
+    for(int num=0;num<buffer_int;num++)
+    {
+       for(int i=sign_x1[num];i<sign_x2[num];i++)
+       {
+          for(int j=sign_y2[num];j<sign_y2[num]+10;j++)
+          {
+              num_threshold++;
+              add_threshold=add_threshold+img_yellow[i][j];
+          }
+       }
+       if(add_threshold/num_threshold<avg_threshold)
+       {
+           sign_x1[num]=0;
+           sign_x2[num]=0;
+       }
+    }
 
+//----------------最后的标记结果是读取sign_x1(为最小的X值)，sign_x2（为最大的X值），sign_y1（为最小的Y值），sign_y2（为最大的Y值）数组的值进行标记
 
 
 
