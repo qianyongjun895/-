@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.1" halcon_version="12.0">
+<procedure name="main">
+<interface/>
+<body>
+<l>read_image (Image, 'E:/统一试题/图2.jpg')</l>
+<l>get_image_size (Image, Width, Height)</l>
+<l>decompose3 (Image, Image1, Image2, Image3)</l>
+<l>threshold (Image1, Region, 240, 255)</l>
+<l>threshold (Image2, Region1, 240, 255)</l>
+<l>threshold (Image3, Region2, 240, 255)</l>
+<l>region_to_bin (Region2, BinImage, 255, 0, Width, Height)</l>
+<l>region_to_bin (Region, BinImage1, 255, 0, Width, Height)</l>
+<l>abs_diff_image (BinImage1, BinImage, ImageAbsDiff, 1)</l>
+<l>threshold (ImageAbsDiff, Region3, 128, 255)</l>
+<l>opening_circle (Region3, RegionOpening, 3.5)</l>
+<l>connection (RegionOpening, ConnectedRegions)</l>
+<l>select_shape (ConnectedRegions, SelectedRegions, 'area', 'or', 500, 99999)</l>
+<l>count_obj (SelectedRegions, Number)</l>
+<l>for i := 1 to Number by 1</l>
+<l>    select_obj (SelectedRegions, ObjectSelected, i)</l>
+<l>    smallest_rectangle2 (ObjectSelected, Row, Column, Phi, Length1, Length2)</l>
+<l>    gen_rectangle2 (Rectangle1, Row, Column, Phi, Length1, Length2)</l>
+<l>    smallest_rectangle1 (Rectangle1, Row1, Column1, Row2, Column2)</l>
+<l>    gen_rectangle1 (Rectangle2, Row2, Column1, Row2+10, Column2)</l>
+<l>    intensity (Rectangle2, Image2, Mean, Deviation)</l>
+<l>  endfor</l>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+</hdevelop>
